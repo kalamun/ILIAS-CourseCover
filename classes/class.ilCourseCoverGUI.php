@@ -159,6 +159,17 @@
 		return $image_url;
 	}
 
+	public function getCoverURL($ref_id, $type) {
+		$ids = $this->getCoverIdsByObjectId($ref_id);
+		if (empty($ids)) return '';
+
+		$key = 'cover_' . $type . '_id';
+		$image_id = !empty($ids[$key]) ? $ids[$key] : '';
+		if (empty($image_id)) return '';
+
+		return $this->getCoverUrlById($image_id);
+	}
+
 
 	/**
 	 *
