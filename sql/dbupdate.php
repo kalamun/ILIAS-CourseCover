@@ -37,6 +37,6 @@ if(!$ilDB->tableExists($table_name)) {
 	];
 	
 	$ilDB->createTable($table_name, $fields);
-	$ilDB->addPrimaryKey($table_name, ["obj_id"]);
+	$ilDB->addPrimaryKey($table_name, ["ref_id"]);
 }
 ?>
