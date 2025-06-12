@@ -100,7 +100,7 @@
 
 		// logo
 		$logo_field = new ilImageFileInputGUI($this->lng->txt("logo"), 'cover_logo_id');
-		$logo_field->setAllowDeletion(true);
+		$logo_field->setAllowDeletion(false);
 		$logo_field->setRequired(false);
 		$form->addItem($logo_field);
 		$image_url = $this->getCoverUrlById($props['cover_logo_id']);
@@ -108,7 +108,7 @@
 
 		// square thumbnail
 		$square = new ilImageFileInputGUI($this->lng->txt("square"), 'cover_square_id');
-		$square->setAllowDeletion(true);
+		$square->setAllowDeletion(false);
 		$square->setRequired(false);
 		$form->addItem($square);
 		$image_url = $this->getCoverUrlById($props['cover_square_id']);
@@ -116,21 +116,21 @@
 
 		// banner
 		$banner = new ilImageFileInputGUI($this->lng->txt("banner"), 'cover_banner_id');
-		$banner->setAllowDeletion(true);
+		$banner->setAllowDeletion(false);
 		$banner->setRequired(false);
 		$form->addItem($banner);
 		$image_url = $this->getCoverUrlById($props['cover_banner_id']);
 		if (!empty($image_url)) $banner->setImage($image_url);
 
 		$banner2 = new ilImageFileInputGUI($this->lng->txt("banner-2"), 'cover_banner2_id');
-		$banner2->setAllowDeletion(true);
+		$banner2->setAllowDeletion(false);
 		$banner2->setRequired(false);
 		$form->addItem($banner2);
 		$image_url = $this->getCoverUrlById($props['cover_banner2_id']);
 		if (!empty($image_url)) $banner2->setImage($image_url);
 
 		$banner3 = new ilImageFileInputGUI($this->lng->txt("banner-3"), 'cover_banner3_id');
-		$banner3->setAllowDeletion(true);
+		$banner3->setAllowDeletion(false);
 		$banner3->setRequired(false);
 		$form->addItem($banner3);
 		$image_url = $this->getCoverUrlById($props['cover_banner3_id']);
@@ -228,9 +228,17 @@
 		];
 		$success = [];
 
+		$props = $this->getCoverIdsByObjectId($ref_id);
+
 		foreach($fields as $key) {
-			if (!empty($_FILES[$key]["name"])) {
-					$old_file_id = empty($properties[$key]) ? null : $properties[$key];
+			if (!empty($_REQUEST[$key . "_delete"]) && !empty($props[$key])) {
+					$fileObj = new ilObjFile((int) $props[$key], false);
+					$fileObj->setType("file");
+					$fileObj->doDelete();
+					$success[$key] = "NULL";
+
+			} elseif (!empty($_FILES[$key]["name"])) {
+					$old_file_id = empty($props[$key]) ? null : $props[$key];
 					
 					$fileObj = new ilObjFile((int) $old_file_id, false);
 					$fileObj->setType("file");
@@ -255,13 +263,13 @@
 					$success[$key] = $fileObj->getId();
 			}
 		}
-		
+
 		if (count($success) == 0) return false;
 		
 		$success['ref_id'] = intval($ref_id);
 		
 		$query = "INSERT INTO " . $this->db_table_name . " ". $this->successToInsert($success) ." ON DUPLICATE KEY UPDATE ". $this->successToUpdate($success) .";";
-		$this->db->query($query);
+		$result = $this->db->query($query);
 		return true;
 	}
 
@@ -273,16 +281,16 @@
 		$output = rtrim($output, ",");
 		$output .= ") VALUES(";
 		foreach ($success as $key => $value) {
-			$output .= "'" . intval($value) . "',";
+			$output .= $value === "NULL" ? "NULL," : "'" . intval($value) . "',";
 		}
 		$output = rtrim($output, ",") . ")";
 		return $output;
 	}
-
+	
 	private function successToUpdate($success) {
 		$output = "";
 		foreach ($success as $key => $value) {
-			$output .= "`". $key . "`='" . intval($value) . "',";
+			$output .= "`". $key . "`=" . ($value === "NULL" ? "NULL," : "'" . intval($value)) . "',";
 		}
 		$output = rtrim($output, ",");
 		return $output;
